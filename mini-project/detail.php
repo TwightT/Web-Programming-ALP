@@ -1,45 +1,43 @@
 <?php
 // HALAMAN DETAIL BARANG
 
+// Memulai session agar server dapat mengingat user yang sedang membuka website ]
+// dan menyimpan id kecil agar saat membuka page lain yang memiliki session_start();
 session_start();
 
+// Jika tidak ada session login, tendang kembali ke halaman login
 if (!isset($_SESSION["login"])) {
     header("Location: login.php");
     exit();
 }
 
+// koneksi ke server mysql
 include_once "koneksi_database.php";
 
-// Ambil ID dari URL (Query string)
-$id = $_GET['id'] ?? '';
-
-if (empty($id)) {
-    die("Error: ID barang tidak ditemukan. <a href='index.php'>Kembali</a>");
+// Ensure an ID was passed in the URL
+if (!isset($_GET['id']) || empty(trim($_GET['id']))) {
+    die("Error: ID Barang tidak ditemukan. <a href='index.php'>Kembali</a>");
 }
 
-// Ambil Detail Barang
-$product = $database->getReference('Produk/' . $id)->getValue();
+$id = trim($_GET['id']);
+
+// Use Prepared Statement to fetch product details securely
+$query = "SELECT * FROM Produk WHERE brgKode = ?";
+$stmt = mysqli_prepare($conn, $query);
+mysqli_stmt_bind_param($stmt, "s", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$product = mysqli_fetch_assoc($result);
 
 if (!$product) {
     die("Error: Barang tidak ditemukan di database. <a href='index.php'>Kembali</a>");
 }
-$product['brgKode'] = $id;
 
-// Ambil Riwayat Log dan Filter Manual
-$all_logs = $database->getReference('Log_User')->getValue();
-$product_logs = [];
-
-if ($all_logs) {
-    foreach ($all_logs as $log) {
-        if (isset($log['brgKode']) && $log['brgKode'] === $id) {
-            $product_logs[] = $log;
-        }
-    }
-    // Sort log by waktu DESC
-    usort($product_logs, function($a, $b) {
-        return strtotime($b['waktu']) - strtotime($a['waktu']);
-    });
-}
+$query_log = "SELECT * FROM Log_User WHERE brgKode = ? ORDER BY waktu DESC";
+$stmt_log = mysqli_prepare($conn, $query_log);
+mysqli_stmt_bind_param($stmt_log, "s", $id);
+mysqli_stmt_execute($stmt_log);
+$result_log = mysqli_stmt_get_result($stmt_log);
 ?>
 
 
@@ -156,7 +154,7 @@ if ($all_logs) {
                 <div class="log-container" id="logSection">
                     <h3 style="margin-top: 0; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Riwayat Log Database</h3>
                     
-                    <?php if (!empty($product_logs)): ?>
+                    <?php if (mysqli_num_rows($result_log) > 0): ?>
                         <table class="log-table">
                             <tr>
                                 <th width="18%">Waktu</th>
@@ -164,7 +162,7 @@ if ($all_logs) {
                                 <th width="10%">Aksi</th>
                                 <th width="57%">Detail Perubahan</th>
                             </tr>
-                            <?php foreach($product_logs as $log): ?>
+                            <?php while($log = mysqli_fetch_assoc($result_log)): ?>
                             <tr>
                                 <td><?php echo date('d-M-Y H:i', strtotime($log['waktu'])); ?></td>
                                 <td><?php echo htmlspecialchars($log['username']); ?></td>
@@ -218,7 +216,7 @@ if ($all_logs) {
                                     ?>
                                 </td>
                             </tr>
-                            <?php endforeach; ?>
+                            <?php endwhile; ?>
                         </table>
                     <?php else: ?>
                         <div style="text-align: center; padding: 40px 20px; background-color: #fff; border: 2px dashed #ccc; border-radius: 8px; margin-top: 15px;">
@@ -257,3 +255,8 @@ if ($all_logs) {
     </footer>
 </body>
 </html>
+<?php 
+if (isset($stmt)) { mysqli_stmt_close($stmt); }
+if (isset($stmt_log)) { mysqli_stmt_close($stmt_log); }
+mysqli_close($conn); 
+?>

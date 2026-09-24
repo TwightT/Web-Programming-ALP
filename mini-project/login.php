@@ -1,36 +1,60 @@
 <?php
+// HALAMAN LOGIN
+
+// Memulai session agar server dapat mengingat user yang sedang membuka website ]
+// dan menyimpan id kecil agar saat membuka page lain yang memiliki session_start();
 session_start();
 
-if (isset($_SESSION["login"])) { 
-    header("Location: index.php"); 
-    exit(); 
+if (isset($_SESSION["login"])) { // Cek status login
+    header("Location: index.php"); // Alihkan halaman
+    exit(); // Hentikan eksekusi
 }
 
+// koneksi ke server mysql
 include_once "koneksi_database.php";
+
+// Reset status error
 $error = false;
 
+// Cek apakah tombol login sudah dipencet
 if (isset($_POST["login"])) {
-    $email = trim($_POST["email"]); // Ubah penamaan POST menjadi email
+    // Bersihkan username dari spasi atau blank space
+    $user = trim($_POST["username"]);
+    // Bersihkan password dari spasi atau blank space
     $pass = trim($_POST["password"]);
 
-    try {
-        // Melakukan otentikasi ke Firebase
-        $signInResult = $auth->signInWithEmailAndPassword($email, $pass);
+    // Siapkan query
+    $query = "SELECT * FROM Users WHERE username = ?";
+    // membuat prepared statement
+    $stmt = mysqli_prepare($conn, $query);
+    // mengikat username dengan prepared statement dan mengubahnya menjadi string
+    mysqli_stmt_bind_param($stmt, "s", $user);
+    // Jalankan query prepared statement
+    mysqli_stmt_execute($stmt);
+    // Ambil hasil
+    $result = mysqli_stmt_get_result($stmt);
+
+    // Pastikan user unik
+    if (mysqli_num_rows($result) === 1) {
+        // Bongkar data
+        $row = mysqli_fetch_assoc($result);
         
-        // Mengambil data identitas pengguna (seperti nama)
-        $userData = $auth->getUser($signInResult->firebaseUserId());
-
-        // Set session login
-        $_SESSION["login"] = true;
-        $_SESSION["username"] = $userData->displayName ?? 'User';
-        $_SESSION["email"] = $userData->email;
-
-        header("Location: index.php");
-        exit();
-    } catch (Exception $e) {
-        // Otentikasi gagal (email/password salah atau pengguna tidak ditemukan)
-        $error = true;
+        // Verifikasi password
+        if (password_verify($pass, $row["password"])) {
+            // Set flag success
+            $_SESSION["login"] = true;
+            // Simpan identitas
+            $_SESSION["username"] = $row["username"];
+            // Simpan nama
+            $_SESSION["nama_lengkap"] = $row["nama_lengkap"];
+            // Masuk ke halaman beranda website
+            header("Location: index.php");
+            // menyelesaikan dan menutup process
+            exit();
+        }
     }
+    // set flag gagal
+    $error = true;
 }
 ?>
 
@@ -62,7 +86,7 @@ if (isset($_POST["login"])) {
             color: aliceblue;
         }
 
-        /* grup input email dan password */
+        /* grup input username dan password */
         .input-group {
             margin-bottom: 15px;
             text-align: left;
@@ -125,10 +149,10 @@ if (isset($_POST["login"])) {
         <!-- form input -->
         <form action="" method="POST">
             <div class="input-group">
-                <!-- label email -->
-                <label for="email">Email</label>
-                <!-- input field email -->
-                <input type="email" name="email" id="email" required autocomplete="off">
+                <!-- label username -->
+                <label for="username">Username</label>
+                <!-- input field username -->
+                <input type="text" name="username" id="username" required autocomplete="off">
             </div>
             <div class="input-group">
                 <!-- label password -->
