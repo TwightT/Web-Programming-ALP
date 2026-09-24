@@ -1,8 +1,6 @@
 <?php
 // HALAMAN EDIT BARANG
 
-// Memulai session agar server dapat mengingat user yang sedang membuka website ]
-// dan menyimpan id kecil agar saat membuka page lain yang memiliki session_start();
 session_start();
 
 // Jika tidak ada session login, tendang kembali ke halaman login
@@ -11,110 +9,93 @@ if (!isset($_SESSION["login"])) {
     exit();
 }
 
-// koneksi ke server mysql
 include_once "koneksi_database.php";
 
-// Tambahan kode untuk trigger mysql, berfungsi untuk logging perubahan yang terjadi pada database melalui website
-// Cek apakah ada session username (user sudah login)
-if (isset($_SESSION["username"])) {
-    // Ambil nama user
-    $aktif_user = mysqli_real_escape_string($conn, $_SESSION["username"]);
-    // Kirim nama user ke MySQL sebagai variabel session database
-    mysqli_query($conn, "SET @app_username = '$aktif_user'");
-}
+// 1. Ambil ID dari URL (query string)
+$id = $_GET['id'] ?? '';
 
-// mengambil id dari url browser dan membersihkannya (http://localhost/mini-project/detail.php?||id=BK20|| id yang dimaksud)
-// mengecek apakah ada id, jika ada bersihkan idnya, jika tidak maka kosongkan
-$id = isset($_GET['id']) ? trim($_GET['id']) : '';
-
-// cek apakah ada id, jika kosong maka berikan error bahwa barang tidak ditemukan
 if (empty($id)) {
-    die("Akses ditolak: ID Barang tidak ditemukan.");
+    die("ID barang tidak ditemukan.");
 }
 
-// membuat prepared statement untuk mengambil data dari database
-$stmt_get = mysqli_prepare($conn, "SELECT * FROM Produk WHERE brgKode = ?");
-// mengikat id dengan prepared statement dan mengubahnya menjadi string
-mysqli_stmt_bind_param($stmt_get, "s", $id);
-// menjalankan query
-mysqli_stmt_execute($stmt_get);
-// mendapatkan hasil
-$result = mysqli_stmt_get_result($stmt_get);
-// jika setelah database mencari produk dan tidak ketemu maka tunjukan error
-if (mysqli_num_rows($result) === 0) {
+// Ambil data lama sebelum diupdate
+$data_lama = $database->getReference('Produk/' . $id)->getValue();
+
+if (!$data_lama) {
     die("Barang tidak ditemukan.");
 }
-// jika ketemu barangnya maka disimpan di data
-$data = mysqli_fetch_assoc($result);
-// menutup query
-mysqli_stmt_close($stmt_get);
 
-
-// mengambil data yang ada di form update
 if (isset($_POST['update'])) {
-    // mengambil data id menggunakan $id dari URL untuk kode, karena input disabled tidak mengirim POST
     $kode = $id; 
-    // mengambil data nama
-    $nama = $_POST['brgNama'];
-    // mengambil data stok 
-    $stok = (int)$_POST['brgStok'];
-    // Penanganan jika harga kosong
+    $nama = $_POST['brgNama'] ?? '';
+    $stok = (int)($_POST['brgStok'] ?? 0);
     $harga = !empty($_POST['brgHarga']) ? (float)$_POST['brgHarga'] : 0; 
-    // mengambil data isi
-    $isi = $_POST['brgIsi'];
-    // mengambil data keterangan
-    $keterangan = $_POST['brgKeterangan'];
-    // mengambil data gambar
-    $gambar_lama = $_POST['gambarLama']; 
+    $isi = $_POST['brgIsi'] ?? '';
+    $keterangan = $_POST['brgKeterangan'] ?? '';
+    $gambar_lama = $_POST['gambarLama'] ?? ''; 
 
-    // gunakan gambar lama jika tidak ada upload baru
+    // Default path gambar memakai gambar lama
     $path_gambar_db = $gambar_lama; 
 
-    // cek apakah user mengupload file gambar BARU
+    // Penanganan upload gambar baru jika ada
     if (isset($_FILES['gambarBarang']) && $_FILES['gambarBarang']['error'] === UPLOAD_ERR_OK) {
-        // membuat path folder tujuan
-        $folder_tujuan = "gambar/";
-        // membuat nama file gambar yang diupload user menjadi waktu_namafilegambar
-        $nama_file_baru = time() . "_" . basename($_FILES['gambarBarang']['name']);
-        // meembuat path file gambar yang baru
-        $path_lengkap = $folder_tujuan . $nama_file_baru;
+        $fileTmpPath = $_FILES['gambarBarang']['tmp_name'];
+        $fileName = $_FILES['gambarBarang']['name'];
+        
+        $newFileName = time() . '_' . $fileName;
+        $uploadFileDir = './uploads/';
+        
+        if (!is_dir($uploadFileDir)) {
+            mkdir($uploadFileDir, 0755, true);
+        }
 
-        // Pindahkan gambar baru
-        if (move_uploaded_file($_FILES['gambarBarang']['tmp_name'], $path_lengkap)) {
-            // mengubah path lama dengan path baru
-            $path_gambar_db = $path_lengkap;
-            
-            // Hapus gambar lama dari folder
-            if (file_exists($gambar_lama) && $gambar_lama != "") {
-                unlink($gambar_lama); 
-            }
+        $dest_path = $uploadFileDir . $newFileName;
+
+        if (move_uploaded_file($fileTmpPath, $dest_path)) {
+            $path_gambar_db = $dest_path;
         }
     }
 
-    // membuat prepared statement
-    $query = "UPDATE Produk SET brgNama=?, brgStok=?, brgHarga=?, brgIsi=?, brgGambar=?, brgKeterangan=? WHERE brgKode=?";
-    $stmt = mysqli_prepare($conn, $query);
-    
-    // mengikat prepared statement dengan data di form update, dan mengubah isi data sesuai dengan 
-    // jenis data masing - masing
-    // Tipe data parameter: s=string, i=integer, d=double/float
-    // sidssss = $nama = String, $stok = Int, $harga = Decimal, $isi = String, $path_gambar_db = String, $keterangan = String, $kode = String
-    mysqli_stmt_bind_param($stmt, "sidssss", $nama, $stok, $harga, $isi, $path_gambar_db, $keterangan, $kode);
-    
-    // menjalankan statement sekaligus mengecek apakah proses update berhasil di database
-    if (mysqli_stmt_execute($stmt)) {
-        echo "<script>alert('Data berhasil diperbarui!'); window.location.href='index.php';</script>";
-        exit();
-    // jika tidak berhasil maka tampilkan error
-    } else {
-        echo "<script>alert('Gagal mengupdate data: " . mysqli_error($conn) . "');</script>";
-    }
+    // 2. Update Produk di Firebase
+    $database->getReference('Produk/' . $kode)->update([
+        'brgNama' => $nama,
+        'brgStok' => $stok,
+        'brgHarga' => $harga,
+        'brgIsi' => $isi,
+        'brgGambar' => $path_gambar_db,
+        'brgKeterangan' => $keterangan,
+        'brgTanggal' => date('Y-m-d H:i:s')
+    ]);
+
+    // 3. Masukkan Log Perubahan secara Manual
+    $database->getReference('Log_User')->push([
+        'waktu' => date('Y-m-d H:i:s'),
+        'username' => $_SESSION["username"] ?? 'System',
+        'brgKode' => $kode,
+        'aksi' => 'UPDATE',
+        'brgNama_lama' => $data_lama['brgNama'] ?? '',
+        'brgNama_baru' => $nama,
+        'brgStok_lama' => $data_lama['brgStok'] ?? 0,
+        'brgStok_baru' => $stok,
+        'brgHarga_lama' => $data_lama['brgHarga'] ?? 0,
+        'brgHarga_baru' => $harga,
+        'brgIsi_lama' => $data_lama['brgIsi'] ?? '',
+        'brgIsi_baru' => $isi,
+        'brgKeterangan_lama' => $data_lama['brgKeterangan'] ?? '',
+        'brgKeterangan_baru' => $keterangan,
+        'brgGambar_lama' => $data_lama['brgGambar'] ?? '',
+        'brgGambar_baru' => $path_gambar_db
+    ]);
+
+    echo "<script>alert('Data berhasil diperbarui!'); window.location.href='index.php';</script>";
+    exit();
 }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+    <meta charset="UTF-8">
     <title>Edit Barang</title>
     <link rel="stylesheet" href="mystyle.css">
     <style>
@@ -149,74 +130,52 @@ if (isset($_POST['update'])) {
 <body>
     <!-- header -->
     <header>
-        <!-- judul -->
         <a class="dotted-lines">
         EDIT BARANG
         </a>
     </header>
+
     <!-- isi -->
     <div class="body-container">
-        <!-- menunjukan tombol yang ada di file navigation.php -->
         <nav><?php include_once "navigation.php"; ?></nav>
-        <!-- container form edit -->
         <main>
-            <!-- form edit -->
             <form id="formEdit" action="" method="POST" enctype="multipart/form-data">
-                <!-- label kode barang -->
                 <label>Kode Barang (Tidak bisa diubah):</label>
-                <!-- input field kode barang yang didisabled -->
-                <input type="text" value="<?php echo htmlspecialchars($data['brgKode']); ?>" disabled>
+                <input type="text" value="<?php echo htmlspecialchars($id); ?>" disabled>
                 
-                <!-- label nama barang -->
                 <label for="brgNama">Nama Barang:</label>
-                <!-- input field nama barang -->
-                <input type="text" name="brgNama" value="<?php echo htmlspecialchars($data['brgNama']); ?>" required>
+                <input type="text" name="brgNama" value="<?php echo htmlspecialchars($data_lama['brgNama'] ?? ''); ?>" required>
                 
-                <!-- label stock barang -->
                 <label for="brgStok">Stok:</label>
-                <!-- input field stock barang -->
-                <input type="number" name="brgStok" value="<?php echo htmlspecialchars($data['brgStok']); ?>" required>
+                <input type="number" name="brgStok" value="<?php echo htmlspecialchars($data_lama['brgStok'] ?? 0); ?>" required>
                 
-                <!-- label harga barang -->
                 <label for="brgHarga">Harga:</label>
-                <!-- input field harga barang -->
-                <input type="number" name="brgHarga" step="0.01" value="<?php echo htmlspecialchars($data['brgHarga']); ?>">
+                <input type="number" name="brgHarga" step="0.01" value="<?php echo htmlspecialchars($data_lama['brgHarga'] ?? 0); ?>">
                 
-                <!-- label isi barang -->
                 <label for="brgIsi">Isi/Satuan:</label>
-                <!-- input field isi barang -->
-                <input type="text" name="brgIsi" value="<?php echo htmlspecialchars($data['brgIsi']); ?>">
+                <input type="text" name="brgIsi" value="<?php echo htmlspecialchars($data_lama['brgIsi'] ?? ''); ?>">
                 
-                <!-- input field gambar lama yang disembunyikan -->
-                <input type="hidden" name="gambarLama" value="<?php echo htmlspecialchars($data['brgGambar']); ?>">
+                <input type="hidden" name="gambarLama" value="<?php echo htmlspecialchars($data_lama['brgGambar'] ?? ''); ?>">
+                
                 <label>Ganti Gambar (Biarkan kosong jika tidak ingin diganti):</label>
-                <!-- gambar lama -->
-                <?php if(!empty($data['brgGambar'])): ?>
-                    <img src="<?php echo htmlspecialchars($data['brgGambar']); ?>" style="max-width: 150px; border-radius: 5px; margin-bottom: 10px;">
+                <?php if(!empty($data_lama['brgGambar'])): ?>
+                    <img src="<?php echo htmlspecialchars($data_lama['brgGambar']); ?>" style="max-width: 150px; border-radius: 5px; margin-bottom: 10px;" alt="Gambar Lama">
                 <?php endif; ?>
-                <!-- input button (Choose File) gambar barang -->
+                
                 <input type="file" name="gambarBarang" id="inputGambar" accept="image/*">
                 
-                <!-- label keterangan barang -->
                 <label for="brgKeterangan">Keterangan:</label>
-                <!-- input field keterangan barang -->
-                <input type="text" name="brgKeterangan" value="<?php echo htmlspecialchars($data['brgKeterangan']); ?>">
+                <input type="text" name="brgKeterangan" value="<?php echo htmlspecialchars($data_lama['brgKeterangan'] ?? ''); ?>">
                 
-                <!-- tombol submit -->
-                <button type="submit" name="update" class="btn btn-update" style=" margin-top: 30px;">Update Data</button>
-                <!-- tombol batal -->
+                <button type="submit" name="update" class="btn btn-update" style="margin-top: 30px;">Update Data</button>
                 <a class="btn" href="index.php" style="text-align:center; margin-top:10px;">Batal</a>
             </form>
         </main>
         <nav></nav>
     </div>
-    <!-- footer -->
+
     <footer>
         &copy; Copyright 2026 - Hezekiah Austin Sunanto
     </footer>
 </body>
 </html>
-<?php 
-if (isset($stmt)) { mysqli_stmt_close($stmt); }
-mysqli_close($conn); 
-?>

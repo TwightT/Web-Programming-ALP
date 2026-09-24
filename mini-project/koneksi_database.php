@@ -1,14 +1,13 @@
-<!-- KONEKSI KE DATABASE MYSQL -->
+<!-- KONEKSI KE DATABASE FIREBASE -->
 
 <?php
-$host     = "localhost";
-$username = "root";
-$password = "";
-$database = "PW";
-$conn = mysqli_connect($host, $username, $password, $database);
+require __DIR__.'/vendor/autoload.php';
+use Kreait\Firebase\Factory;
 
-// JIKA KONEKSI GAGAL TAMPILKAN EROR
-if (!$conn) {
-    die("Koneksi gagal: " . mysqli_connect_error());
-}
+$factory = (new Factory)
+    ->withServiceAccount(__DIR__ . '/cloud-computing-d3ab3-firebase-adminsdk-fbsvc-1dda26e4a6.json')
+    ->withDatabaseUri('https://cloud-computing-d3ab3-default-rtdb.asia-southeast1.firebasedatabase.app/');
+
+$database = $factory->createDatabase();
+$auth = $factory->createAuth();
 ?>
