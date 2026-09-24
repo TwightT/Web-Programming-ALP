@@ -1,43 +1,45 @@
 <?php
 // HALAMAN DETAIL BARANG
 
-// Memulai session agar server dapat mengingat user yang sedang membuka website ]
-// dan menyimpan id kecil agar saat membuka page lain yang memiliki session_start();
 session_start();
 
-// Jika tidak ada session login, tendang kembali ke halaman login
 if (!isset($_SESSION["login"])) {
     header("Location: login.php");
     exit();
 }
 
-// koneksi ke server mysql
 include_once "koneksi_database.php";
 
-// Ensure an ID was passed in the URL
-if (!isset($_GET['id']) || empty(trim($_GET['id']))) {
-    die("Error: ID Barang tidak ditemukan. <a href='index.php'>Kembali</a>");
+// Ambil ID dari URL (Query string)
+$id = $_GET['id'] ?? '';
+
+if (empty($id)) {
+    die("Error: ID barang tidak ditemukan. <a href='index.php'>Kembali</a>");
 }
 
-$id = trim($_GET['id']);
-
-// Use Prepared Statement to fetch product details securely
-$query = "SELECT * FROM Produk WHERE brgKode = ?";
-$stmt = mysqli_prepare($conn, $query);
-mysqli_stmt_bind_param($stmt, "s", $id);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$product = mysqli_fetch_assoc($result);
+// Ambil Detail Barang
+$product = $database->getReference('Produk/' . $id)->getValue();
 
 if (!$product) {
     die("Error: Barang tidak ditemukan di database. <a href='index.php'>Kembali</a>");
 }
+$product['brgKode'] = $id;
 
-$query_log = "SELECT * FROM Log_User WHERE brgKode = ? ORDER BY waktu DESC";
-$stmt_log = mysqli_prepare($conn, $query_log);
-mysqli_stmt_bind_param($stmt_log, "s", $id);
-mysqli_stmt_execute($stmt_log);
-$result_log = mysqli_stmt_get_result($stmt_log);
+// Ambil Riwayat Log dan Filter Manual
+$all_logs = $database->getReference('Log_User')->getValue();
+$product_logs = [];
+
+if ($all_logs) {
+    foreach ($all_logs as $log) {
+        if (isset($log['brgKode']) && $log['brgKode'] === $id) {
+            $product_logs[] = $log;
+        }
+    }
+    // Sort log by waktu DESC
+    usort($product_logs, function($a, $b) {
+        return strtotime($b['waktu']) - strtotime($a['waktu']);
+    });
+}
 ?>
 
 
