@@ -8,7 +8,7 @@ A simple secure web application built to manage inventory stock while maintainin
 * **Automatic Price Formatting:** Price formatting and data validation built-in.
 
 ## Key Features
-* **Secure Authentication:** Dedicated login page with secure password hashing.
+* **Firebase Authentication:** Dedicated Login and Register pages supporting Email/Password authentication via Firebase Auth SDK.
 * **Audit Logging:** Automatically tracks and logs all user changes. Every Insert, Edit, and Delete action is recorded to maintain a complete history of database modifications.
 
 ## Security Measures
@@ -19,12 +19,15 @@ We take data protection seriously. This project includes:
 
 ## Prerequisites
 To run this project locally, you will need:
-* XAMPP.
-* Any browser (chrome, firefox, microsoft edge, ect)
+* Web Server with PHP support (e.g., XAMPP, WAMP, or PHP Built-in Server).
+* Composer (for managing dependencies such as `kreait/firebase-php`).
+* Web browser (Chrome, Firefox, Microsoft Edge, etc.).
+* Firebase Account with an active Firebase Realtime Database and Firebase Authentication enabled.
 
 ## Installation & Setup
-1. Clone or download the project files into your web server's root directory (e.g., `htdocs`).
-2. Open your MySQL management tool (like phpMyAdmin) and create a new database.
-3. Import the provided `.sql` file in the `/query` folder to set up the necessary tables and triggers.
-4. Run (`adduser.php`) in your local browser to create the first administrator user for logging in.
-5. Open your web browser and navigate to `localhost/your-project-name-folder` to access the login page.
+1. **Clone or download** the project files into your web server's root directory (e.g., `htdocs` for XAMPP).
+2. **Install Dependencies**: Run `composer install` inside the project root directory to fetch the required Firebase SDK packages.
+3. **Set up Firebase**: Open the [Firebase Console](https://console.firebase.google.com/), create a new project, and enable **Firebase Realtime Database** and **Firebase Authentication** (Email/Password sign-in method).
+4. **Download Credentials**: Generate a new Private Key (Service Account JSON file) under *Project Settings > Service Accounts* and place it inside your project directory as `firebase_credentials.json` (or update the filename reference in configuration files).
+5. **Configure Connection**: Update `koneksi_database.php` with your Firebase Realtime Database URL and the path to your downloaded Service Account JSON file.
+6. **Register / Create User**: Access `http://localhost/your-project-folder/register.php` in your browser to register a new account, or create an administrator user directly inside the Firebase Authentication console.
