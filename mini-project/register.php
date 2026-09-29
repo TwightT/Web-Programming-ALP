@@ -12,34 +12,32 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Auth;
 
 $error = false;
-$error_msg = "";
-$success_msg = "";
+$success = false;
+$message = "";
 
-// Cek status registrasi dari URL
-if (isset($_GET['registered']) && $_GET['registered'] == 1) {
-    $success_msg = "Registrasi berhasil! Silakan login dengan akun baru Anda.";
-}
-
-if (isset($_POST["login"])) {
+if (isset($_POST["register"])) {
     $email = $_POST["email"] ?? '';
     $password = $_POST["password"] ?? '';
+    $confirm_password = $_POST["confirm_password"] ?? '';
 
-    try {
-        $factory = (new Factory)->withServiceAccount(__DIR__ . '/cloud-computing-d3ab3-firebase-adminsdk-fbsvc-1dda26e4a6.json');
-        $auth = $factory->createAuth();
-
-        $signInResult = $auth->signInWithEmailAndPassword($email, $password);
-        
-        $_SESSION["login"] = true;
-        $_SESSION["user_id"] = $signInResult->firebaseUserId();
-        $_SESSION["email"] = $email;
-
-        header("Location: index.php");
-        exit();
-
-    } catch (Exception $e) {
+    if ($password !== $confirm_password) {
         $error = true;
-        $error_msg = "Login gagal: Email atau Password salah!";
+        $message = "Konfirmasi kata sandi tidak cocok!";
+    } else {
+        try {
+            $factory = (new Factory)->withServiceAccount(__DIR__ . '/cloud-computing-d3ab3-firebase-adminsdk-fbsvc-1dda26e4a6.json');
+            $auth = $factory->createAuth();
+
+            $user = $auth->createUserWithEmailAndPassword($email, $password);
+            $success = true;
+            $message = "Registrasi berhasil! Anda akan dialihkan ke halaman Login dalam 2 detik...";
+
+            // Auto redirect ke login.php setelah 2 detik
+            header("refresh:2;url=login.php?registered=1");
+        } catch (Exception $e) {
+            $error = true;
+            $message = "Gagal mendaftar: " . $e->getMessage();
+        }
     }
 }
 ?>
@@ -49,31 +47,27 @@ if (isset($_POST["login"])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Inventory</title>
+    <title>Register - Inventory</title>
     <link rel="stylesheet" href="mystyle.css">
     <style>
-        .login-container {
+        .register-container {
             position: absolute;
             inset: 0;
             margin: auto;
             width: 30%;
             height: fit-content;
             background-color: #d81515;
-            padding: 50px;
+            padding: 40px 50px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             text-align: center;
         }
 
-        .login-container h2 {
+        .register-container h2 {
             margin-bottom: 20px;
             color: aliceblue;
         }
 
-<<<<<<< Updated upstream
-        /* grup input email dan password */
-=======
->>>>>>> Stashed changes
         .input-group {
             margin-bottom: 15px;
             text-align: left;
@@ -93,7 +87,7 @@ if (isset($_POST["login"])) {
             box-sizing: border-box;
         }
 
-        .btn-login {
+        .btn-register {
             width: 50%;
             padding: 10px;
             background-color: aliceblue;
@@ -105,30 +99,26 @@ if (isset($_POST["login"])) {
             margin-top: 20px;
         }
 
-        .btn-login:hover {
+        .btn-register:hover {
             background-color: #d1d8de;
         }
 
         .msg-box {
             color: #ffffff;
             background-color: rgba(0, 0, 0, 0.3);
-            padding: 8px;
+            padding: 10px;
             border-radius: 5px;
             font-style: italic;
             margin-bottom: 15px;
             display: block;
         }
 
-        .success-msg {
+        .success-box {
             background-color: #28a745;
             color: #ffffff;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: block;
         }
 
-        .register-link {
+        .login-link {
             margin-top: 15px;
             display: block;
             color: aliceblue;
@@ -137,47 +127,33 @@ if (isset($_POST["login"])) {
     </style>
 </head>
 <body>
-    <div class="login-container"> 
-<<<<<<< Updated upstream
-        <!-- judul -->
-        <h2 class="dotted-lines">
-        INVENTORY
-        </h2>
-        <!-- munculkan pesan jika error="true" -->
-        <?php if ($error): ?>
-            <span class="error-msg">Username atau Password salah!</span>
-=======
-        <h2 class="dotted-lines">INVENTORY</h2>
+    <div class="register-container"> 
+        <h2 class="dotted-lines">REGISTER</h2>
 
-        <?php if (!empty($success_msg)): ?>
-            <span class="success-msg"><?= htmlspecialchars($success_msg) ?></span>
->>>>>>> Stashed changes
+        <?php if ($error): ?>
+            <span class="msg-box"><?= htmlspecialchars($message) ?></span>
         <?php endif; ?>
 
-        <?php if ($error): ?>
-            <span class="msg-box"><?= htmlspecialchars($error_msg) ?></span>
+        <?php if ($success): ?>
+            <span class="msg-box success-box"><?= htmlspecialchars($message) ?></span>
         <?php endif; ?>
 
         <form action="" method="POST">
             <div class="input-group">
-<<<<<<< Updated upstream
-                <!-- label email -->
                 <label for="email">Email</label>
-                <!-- input field email -->
-=======
-                <label for="email">Email</label>
->>>>>>> Stashed changes
                 <input type="email" name="email" id="email" required autocomplete="off">
             </div>
             <div class="input-group">
                 <label for="password">Password</label>
                 <input type="password" name="password" id="password" required>
             </div>
-            <button type="submit" name="login" class="btn-login">Login</button>
+            <div class="input-group">
+                <label for="confirm_password">Konfirmasi Password</label>
+                <input type="password" name="confirm_password" id="confirm_password" required>
+            </div>
+            <button type="submit" name="register" class="btn-register">Daftar</button>
         </form>
-
-        <!-- Tautan ke halaman registrasi -->
-        <a href="register.php" class="register-link">Belum punya akun? Register di sini</a>
+        <a href="login.php" class="login-link">Sudah punya akun? Login di sini</a>
     </div>
 </body>
 </html>
