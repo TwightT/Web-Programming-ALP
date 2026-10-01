@@ -160,8 +160,9 @@ if (isset($_POST["login"])) {
 
                 <label for="email">Email</label>
 
-                <input type="email" name="email" id="email" required autocomplete="off">
+                <input style="margin-bottom: 10px; "type="email" name="email" id="email" required autocomplete="off">
             </div>
+            
             <div class="input-group">
                 <label for="password">Password</label>
                 <input type="password" name="password" id="password" required>
