@@ -43,17 +43,25 @@ if (isset($_POST['update'])) {
         $fileTmpPath = $_FILES['gambarBarang']['tmp_name'];
         $fileName = $_FILES['gambarBarang']['name'];
         
-        $newFileName = time() . '_' . $fileName;
-        $uploadFileDir = './uploads/';
+        // Validasi file (Hanya memperbolehkan gambar)
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        $fileType = mime_content_type($fileTmpPath);
         
-        if (!is_dir($uploadFileDir)) {
-            mkdir($uploadFileDir, 0755, true);
-        }
+        if (in_array($fileType, $allowedTypes)) {
+            $newFileName = time() . '_' . basename($fileName);
+            $uploadFileDir = './uploads/';
+            
+            if (!is_dir($uploadFileDir)) {
+                mkdir($uploadFileDir, 0755, true);
+            }
 
-        $dest_path = $uploadFileDir . $newFileName;
+            $dest_path = $uploadFileDir . $newFileName;
 
-        if (move_uploaded_file($fileTmpPath, $dest_path)) {
-            $path_gambar_db = $dest_path;
+            if (move_uploaded_file($fileTmpPath, $dest_path)) {
+                $path_gambar_db = $dest_path;
+            }
+        } else {
+            echo "<script>alert('Format file tidak didukung!');</script>";
         }
     }
 

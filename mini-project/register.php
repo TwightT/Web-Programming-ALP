@@ -31,29 +31,24 @@ $error = false;
 $success = false;
 $message = "";
 
-if (isset($_POST["register"])) {
+// CONTOH UNTUK LOGIN:
+if (isset($_POST["login"])) {
     $email = $_POST["email"] ?? '';
     $password = $_POST["password"] ?? '';
-    $confirm_password = $_POST["confirm_password"] ?? '';
 
-    if ($password !== $confirm_password) {
+    try {
+        // $auth langsung digunakan karena sudah di-*include* dari koneksi_database.php
+        $signInResult = $auth->signInWithEmailAndPassword($email, $password);
+        
+        $_SESSION["login"] = true;
+        $_SESSION["user_id"] = $signInResult->firebaseUserId();
+        $_SESSION["email"] = $email;
+
+        header("Location: index.php");
+        exit();
+    } catch (Exception $e) {
         $error = true;
-        $message = "Konfirmasi kata sandi tidak cocok!";
-    } else {
-        try {
-            $factory = (new Factory)->withServiceAccount(__DIR__ . '/cloud-computing-d3ab3-firebase-adminsdk-fbsvc-1dda26e4a6.json');
-            $auth = $factory->createAuth();
-
-            $user = $auth->createUserWithEmailAndPassword($email, $password);
-            $success = true;
-            $message = "Registrasi berhasil! Anda akan dialihkan ke halaman Login dalam 2 detik...";
-
-            // Auto redirect ke login.php setelah 2 detik
-            header("refresh:2;url=login.php?registered=1");
-        } catch (Exception $e) {
-            $error = true;
-            $message = "Gagal mendaftar: " . $e->getMessage();
-        }
+        $error_msg = "Login gagal: Email atau Password salah!";
     }
 }
 ?>

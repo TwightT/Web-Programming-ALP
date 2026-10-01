@@ -1,5 +1,12 @@
 <?php
+session_start();
+if (!isset($_SESSION["login"])) {
+    die("Akses ditolak: Anda harus login untuk melakukan aksi ini.");
+}
+
 include_once "koneksi_database.php";
+
+$email = "admin@inventory.com"; 
 
 $email = "admin@inventory.com"; // Gunakan email yang valid
 $password_plain = "admin123";

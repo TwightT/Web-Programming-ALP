@@ -11,18 +11,18 @@ require __DIR__ . '/vendor/autoload.php';
 
 use Kreait\Firebase\Factory;
 
-$factory = new Factory();
-$firebaseEnv = getenv('FIREBASE_CREDENTIALS');
+    $factory = new Factory();
+    $firebaseEnv = getenv('FIREBASE_CREDENTIALS');
 
-if ($firebaseEnv) {
-    // Membaca konfigurasi JSON langsung dari Environment Variable Railway
-    $serviceAccount = json_decode($firebaseEnv, true);
-    $factory = $factory->withServiceAccount($serviceAccount);
-} else {
-    // Membaca berkas JSON fisik saat dijalankan di komputer lokal
-    $jsonPath = __DIR__ . '/cloud-computing-d3ab3-firebase-adminsdk-fbsvc-1dda26e4a6.json';
-    $factory = $factory->withServiceAccount($jsonPath);
-}
+    if ($firebaseEnv) {
+        // Membaca konfigurasi JSON langsung dari Environment Variable Railway
+        $serviceAccount = json_decode($firebaseEnv, true);
+        $factory = $factory->withServiceAccount($serviceAccount);
+    } else {
+        // Membaca berkas JSON fisik saat dijalankan di komputer lokal
+        $jsonPath = __DIR__ . '/cloud-computing-d3ab3-firebase-adminsdk-fbsvc-1dda26e4a6.json';
+        $factory = $factory->withServiceAccount($jsonPath);
+    }
 
 $auth = $factory->createAuth();
 use Kreait\Firebase\Auth;
@@ -36,14 +36,13 @@ if (isset($_GET['registered']) && $_GET['registered'] == 1) {
     $success_msg = "Registrasi berhasil! Silakan login dengan akun baru Anda.";
 }
 
+// CONTOH UNTUK LOGIN:
 if (isset($_POST["login"])) {
     $email = $_POST["email"] ?? '';
     $password = $_POST["password"] ?? '';
 
     try {
-        $factory = (new Factory)->withServiceAccount(__DIR__ . '/cloud-computing-d3ab3-firebase-adminsdk-fbsvc-1dda26e4a6.json');
-        $auth = $factory->createAuth();
-
+        // $auth langsung digunakan karena sudah di-*include* dari koneksi_database.php
         $signInResult = $auth->signInWithEmailAndPassword($email, $password);
         
         $_SESSION["login"] = true;
@@ -52,7 +51,6 @@ if (isset($_POST["login"])) {
 
         header("Location: index.php");
         exit();
-
     } catch (Exception $e) {
         $error = true;
         $error_msg = "Login gagal: Email atau Password salah!";

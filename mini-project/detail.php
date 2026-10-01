@@ -231,11 +231,11 @@ if ($all_logs) {
                         </div>
                     <?php endif; ?>
                 </div>
-
-                <div style="margin-top: 30px;">
-                    <a href="index.php" class="btn" style="padding: 10px 20px; text-decoration: none;">&larr; Kembali ke Daftar</a>
+            
+                    <div style="margin-top: 30px;">
+                        <a href="index.php" class="btn" style="padding: 10px 20px; text-decoration: none;">&larr; Kembali ke Daftar</a>
+                    </div>
                 </div>
-            </div>
         </main>    
         <nav></nav>
     </div>
