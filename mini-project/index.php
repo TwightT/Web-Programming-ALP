@@ -11,9 +11,6 @@ if (!isset($_SESSION["login"])) {
     exit();
 }
 
-// Koneksi ke Firebase Database melalui koneksi_database.php
-include_once "koneksi_database.php";
-
 // Mengambil isi search bar
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $all_products = $database->getReference('Produk')->getValue();
