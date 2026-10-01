@@ -138,7 +138,6 @@ if (isset($_POST["login"])) {
 </head>
 <body>
     <div class="login-container"> 
-<<<<<<< Updated upstream
         <!-- judul -->
         <h2 class="dotted-lines">
         INVENTORY
@@ -146,12 +145,11 @@ if (isset($_POST["login"])) {
         <!-- munculkan pesan jika error="true" -->
         <?php if ($error): ?>
             <span class="error-msg">Username atau Password salah!</span>
-=======
+        <?php endif; ?>
         <h2 class="dotted-lines">INVENTORY</h2>
 
         <?php if (!empty($success_msg)): ?>
             <span class="success-msg"><?= htmlspecialchars($success_msg) ?></span>
->>>>>>> Stashed changes
         <?php endif; ?>
 
         <?php if ($error): ?>
@@ -160,13 +158,13 @@ if (isset($_POST["login"])) {
 
         <form action="" method="POST">
             <div class="input-group">
-<<<<<<< Updated upstream
+
                 <!-- label email -->
                 <label for="email">Email</label>
                 <!-- input field email -->
-=======
+
                 <label for="email">Email</label>
->>>>>>> Stashed changes
+
                 <input type="email" name="email" id="email" required autocomplete="off">
             </div>
             <div class="input-group">
