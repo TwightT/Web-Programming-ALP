@@ -2,6 +2,7 @@
 // HALAMAN DETAIL BARANG
 
 session_start();
+require_once __DIR__ . '/koneksi_database.php';
 
 if (!isset($_SESSION["login"])) {
     header("Location: login.php");

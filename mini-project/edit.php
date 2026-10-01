@@ -2,6 +2,7 @@
 // HALAMAN EDIT BARANG
 
 session_start();
+require_once __DIR__ . '/koneksi_database.php';
 
 // Jika tidak ada session login, tendang kembali ke halaman login
 if (!isset($_SESSION["login"])) {

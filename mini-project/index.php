@@ -3,6 +3,7 @@
 
 // Memulai session agar server dapat mengingat user yang sedang membuka website
 session_start();
+require_once __DIR__ . '/koneksi_database.php';
 
 // Jika belum login, balik ke halaman login
 if (!isset($_SESSION["login"])) {
