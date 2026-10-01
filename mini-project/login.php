@@ -146,7 +146,6 @@ if (isset($_POST["login"])) {
         <?php if ($error): ?>
             <span class="error-msg">Username atau Password salah!</span>
         <?php endif; ?>
-        <h2 class="dotted-lines">INVENTORY</h2>
 
         <?php if (!empty($success_msg)): ?>
             <span class="success-msg"><?= htmlspecialchars($success_msg) ?></span>
@@ -158,10 +157,6 @@ if (isset($_POST["login"])) {
 
         <form action="" method="POST">
             <div class="input-group">
-
-                <!-- label email -->
-                <label for="email">Email</label>
-                <!-- input field email -->
 
                 <label for="email">Email</label>
 
